@@ -1,9 +1,13 @@
+    
 from typing import Generic, TypeVar, Optional
-from models.response.ErrorResponse import ErrorResponse
+from app.models.response import ErrorResponse
 
 T = TypeVar("T")  # Define generic type
 
 class ResponseModel(Generic[T]):
+    """
+    Represents a generic response model for API responses.
+    """
     content: Optional[T]
     error: Optional[ErrorResponse]
     is_success: bool

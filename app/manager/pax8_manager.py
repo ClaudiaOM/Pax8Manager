@@ -2,10 +2,10 @@ import json
 from datetime import datetime, timedelta
 from typing import TypeVar, Generic, Dict, Any, Optional
 import requests
-from models.response import (CompanyResponse, TokenResponse, ErrorResponse, PageReponse, ProductReponse, 
-                             ResponseModel, TokenResponse, SubscriptionResponse, SubscriptionListResponse, CompanyListResponse)
-from models.request import SubscriptionRequest
-from models import Pax8Settings
+from app.models.response import CompanyResponse
+from app.models.response import ResponseModel, TokenResponse, CompanyListResponse,  ProductResponse, SubscriptionResponse, SubscriptionListResponse, ErrorResponse
+from app.models.request import SubscriptionRequest
+from app.settings import pax8_settings
 
 T = TypeVar("T", bound=Any)  # Generic type for response content
 
@@ -18,7 +18,7 @@ class Pax8Manager:
     COMPANIES_URL = "/companies"
     PRODUCT_URL = "/products"
 
-    def __init__(self, settings: Pax8Settings):
+    def __init__(self, settings: pax8_settings):
         self.settings = settings
         self.token: Optional[TokenResponse] = None
         self.token_request_time: Optional[datetime] = None
