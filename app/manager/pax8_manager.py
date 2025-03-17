@@ -28,7 +28,8 @@ class Pax8Manager:
         Parses and validates the response from the Pax8 API.
         """
         try:
-            error = json.loads(response_content).get("error")
+            json_content = json.loads(response_content)
+            error = json_content.get("error")
             if error:
                 return ResponseModel(
                     error=ErrorResponse(**error),
@@ -36,7 +37,33 @@ class Pax8Manager:
                     resource=response_uri,
                     is_success=False
                 )
-            response_object = json.loads(response_content)
+
+            # Handle the "status" field with inconsistent values
+            if "status" in json_content:
+                status = json_content.get("status")
+
+                # Try to convert status to an integer if possible
+                try:
+                    status = int(status)
+                except (ValueError, TypeError):
+                    pass  # If conversion fails, keep the original value
+                
+                # Check if status is a numeric HTTP code and handle it
+                if isinstance(status, int) and status >= 400:
+                    return ResponseModel(
+                        error=ErrorResponse(
+                            message="Invalid status code.",
+                            error_type="Status Code Error",
+                            status=status,
+                            instance=response_uri
+                        ),
+                        message="Error",
+                        resource=response_uri,
+                        is_success=False
+                    )
+
+            # Successfully parse and return the response content
+            response_object = json_content
             return ResponseModel(
                 content=response_object,
                 message="Successful",
@@ -47,7 +74,9 @@ class Pax8Manager:
             return ResponseModel(
                 error=ErrorResponse(
                     message="Invalid JSON response.",
-                    type="ParseError"
+                    error_type="ParseError",
+                    status=500,
+                    instance=response_uri
                 ),
                 message="Error",
                 resource=response_uri,
