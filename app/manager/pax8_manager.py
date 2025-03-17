@@ -61,9 +61,9 @@ class Pax8Manager:
         if self.token and self.token_request_time:
             expiration_time = self.token_request_time + timedelta(seconds=self.token.expires_in)
             if datetime.utcnow() > expiration_time:
-                self.token = self.get_access_token().content
+                self.get_access_token()
         else:
-            self.token = self.get_access_token().content
+            self.get_access_token()
         return bool(self.token)
 
     def get_access_token(self) -> ResponseModel[TokenResponse]:
@@ -81,7 +81,10 @@ class Pax8Manager:
 
         response = requests.post(url, json=body, headers=headers)
         self.token_request_time = datetime.utcnow()
-        return self._check_response(response.text, url)
+        check = self._check_response(response.text, url)
+        if check.is_success:
+            self.token = TokenResponse(check.content["access_token"], check.content["expires_in"])
+        return check
 
     def get_companies(self, page: int = 0, size: int = 10) -> ResponseModel[CompanyListResponse]:
         """
@@ -163,7 +166,7 @@ class Pax8Manager:
 
         self._refresh_token_if_expired()
         url = f"{self.settings.base_url}/subscriptions/{subscription_id}"
-        headers = {"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
+        headers = {"Authorization": f"Bearer {self.token.access_token}", "Accept": "application/json"}
 
         response = requests.get(url, headers=headers)
         return self._check_response(response.text, url)
@@ -184,7 +187,7 @@ class Pax8Manager:
 
         self._refresh_token_if_expired()
         url = f"{self.settings.base_url}/subscriptions?page={page}&size={size}"
-        headers = {"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
+        headers = {"Authorization": f"Bearer {self.token.access_token}", "Accept": "application/json"}
 
         response = requests.get(url, headers=headers)
         return self._check_response(response.text, url)
@@ -205,7 +208,7 @@ class Pax8Manager:
 
         self._refresh_token_if_expired()
         url = f"{self.settings.base_url}/subscriptions?companyId={company_id}"
-        headers = {"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
+        headers = {"Authorization": f"Bearer {self.token.access_token}", "Accept": "application/json"}
 
         response = requests.get(url, headers=headers)
         return self._check_response(response.text, url)
@@ -226,7 +229,7 @@ class Pax8Manager:
 
         self._refresh_token_if_expired()
         url = f"{self.settings.base_url}/subscriptions/{subscription.subscription_id}"
-        headers = {"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
+        headers = {"Authorization": f"Bearer {self.token.access_token}", "Accept": "application/json"}
         body = {
             "quantity": subscription.quantity,
             "billingTerm": subscription.billing_term

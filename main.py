@@ -2,7 +2,7 @@ from __future__ import annotations  # Enable postponed evaluation of type annota
 import os
 import json
 from dotenv import load_dotenv
-from app.settings import pax8_settings
+from app.settings import Pax8Settings
 from app.manager import Pax8Manager
 
 # Load environment variables from the .env file
@@ -10,7 +10,7 @@ load_dotenv()
 
 def main():
     # Initialize Pax8Settings from environment variables
-    settings = pax8_settings(
+    settings = Pax8Settings(
         client_id=os.getenv("PAX8_CLIENT_ID"),
         client_secret=os.getenv("PAX8_CLIENT_SECRET"),
         audience=os.getenv("PAX8_AUDIENCE"),
@@ -22,7 +22,7 @@ def main():
     manager = Pax8Manager(settings)
 
     # Specify the company id you want to fetch details for.
-    company_id = "your_company_id_here"  # Replace with a valid company id
+    company_id = "768ef753-ccd6-481d-abae-b50cd020f68c"  # Replace with a valid company id
 
     # Retrieve company details
     print("Fetching company details...")
@@ -44,12 +44,29 @@ def main():
         print("Subscriptions:")
         # Pretty-print the subscriptions data
         print(json.dumps(subscriptions_response.content, indent=2))
+
+        # Retrieve products related to the subscriptions
+        print("\nFetching products for the subscriptions...")
+        for subscription in subscriptions_response.content['content']:
+            products_response = manager.get_product(subscription['productId'])
+            if products_response.is_success:
+                print(f"Products for Subscription '{subscription['id']}':")
+                # Pretty-print the products data
+                print(json.dumps(products_response.content, indent=2))
+            else:
+                print(f"Failed to retrieve products for Subscription '{subscription['id']}':")
+                if products_response.error:
+                    print(products_response.error)
+                else:
+                    print(products_response.message)
     else:
         print("Failed to retrieve subscriptions:")
         if subscriptions_response.error:
             print(subscriptions_response.error)
         else:
             print(subscriptions_response.message)
+
+    
 
 if __name__ == "__main__":
     main()
